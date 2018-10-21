@@ -1,0 +1,34 @@
+<html>
+	<head>
+		<title>moja test stranica</title>
+	</head>
+	<body>
+		<h1>{{ title }}</h1>
+		<a href="{{ url_for('index') }}">
+			<button class="btn btn-primary">Home</button>
+		</a>
+		<a href="{{ url_for('green_on') }}">
+			<button class="btn btn-primary">Green on</button>
+		</a>
+		<a href="{{ url_for('green_off') }}">
+			<button class="btn btn-primary">
+				Green off
+			</button>
+		</a>
+
+		<a href="{{ url_for('red_on') }}">
+			<button class="btn btn-primary">Red on</button>
+		</a>
+
+		<a href="{{ url_for('red_off') }}">
+			<button class="btn btn-primary">Red off</button>
+		</a>
+
+		<p>{{ body }}</p>
+		<ul>
+		{% for element in lista %}
+			<li>{{ element }}</li>
+		{% endfor %}
+		</ul>
+	</body>
+</html>
