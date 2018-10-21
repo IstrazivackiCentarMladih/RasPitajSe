@@ -1,0 +1,35 @@
+[1]
+curl -sSL https://get.docker.com | sh
+docker --version
+docker run arm32v7/hello-world
+sudo usermod -aG docker pi
+docker run armhf/hello-world
+
+[2]
+import sys
+print(sys.version)
+
+[3]
+alias python3.7='docker run -it --rm --name my-running-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp arm32v7/python:3.7.0-slim python'
+
+[4]
+https://gitlab.com/tloki/rpi-fejsanje/blob/master/dockerBuild/Dockerfile
+
+[5]
+#!/usr/bin/env python3
+import time
+
+i = 1
+while True:
+    print(i)
+    i = i + 1
+    time.sleep(0.5)
+
+[6]
+git clone https://gitlab.com/tloki/rpi3-ledice.git
+
+[7]
+read https://docs.docker.com/config/containers/start-containers-automatically/
+
+[8]
+git clone https://gitlab.com/tloki/raspitajse.git

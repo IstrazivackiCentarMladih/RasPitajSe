@@ -1,0 +1,331 @@
+#!/usr/bin/env bash
+
+# this is comment
+
+# enable ssh server -> touch ssh # on boot partition
+# presentation rpi3B -> hotname lokipi, username pi, pass lokiloki, default IP 10.0.0.170
+
+#############################
+### install Docker ##########
+#############################
+
+
+# download docker-ce:
+curl -sSL https://get.docker.com | sh
+# -s silent
+# -S show errors
+# -L if got "content moved" message from server - download from a new location
+
+# check if docker installed correctly
+docker --version
+
+# try to run some example image:
+docker run arm32v7/hello-world # on PC, arch should be amd64 or i386 (instead of arm32v7)
+
+# docker is requiring root priviledges, try this:
+sudo usermod -aG docker pi # or $USER?
+
+# you shoud now reboot your system using reboot command -> will probably require sudo
+
+
+####################################################
+####################################################
+############ hello world ###########################
+####################################################
+
+
+# now try again to run docker image:
+docker run armhf/hello-world
+
+# show running containers
+docker container ls
+
+# get help on https://docs.docker.com
+# https://docs.docker.com/engine/reference/commandline/container_ls/#description
+# show stopped containers
+docker container ls -a
+
+# shutdown running container
+docker container kill b
+
+# rename container
+docker container rename bd814d60ffa8 moj_kontenjer
+
+# run killer container again, explain the difference between start and run
+docker container start
+
+# remove this container
+docker container rm b
+# ili po imenu:
+docker container rm moj_kontenjer
+
+# OR
+
+# or remove all stopped containers:
+docker container prune
+
+####################################################
+############## case study ##########################
+##### Run new ubuntu - on raspberry pi! ############
+####################################################
+
+# some details for docker run 
+# docker run <architecture>/<image-name>:<tag>
+
+# google "docker ubuntu arm32v7"
+# also docker search ubuntu
+# run = pull + run, so no need for "docker pull arm32v7/ubuntu"
+docker run arm32v7/ubuntu
+
+# but the container will stop...
+
+docker run -it arm32v7/ubuntu
+
+# try to install sl, vim
+# apt update
+# apt install sl
+# apt install apt-utils
+# apt install sl
+# apt install vim
+
+vim
+# and exit vim by typing: :q!
+
+# this ubuntu is very basic -> WHY?? The whole point of docker is for it to be...
+
+# exit interactive shell by typing:
+exit # lol, this is so simple!
+
+
+# excercise 1:
+# run ubuntu again (interactively)
+# and try to run vim!
+
+# ubuntu will forget and not save changes
+
+
+####################################################
+#################### case study ####################
+########### I wanna new python3 ####################
+#(..but don't want to destroy my new linux distro) #
+####################################################
+
+# google keywords:
+# docker python arm32v7
+# http://bfy.tw/KSl0
+
+# some details for docker run 
+# docker run <architecture (owner)>/<image-name>:<tag>
+
+# we may run:
+# docker run python -> but we need to pay attention to the architecture
+# we may run:
+# docker run arm32v7/python -> but it will download (who knows what) version of python
+# we may run:
+# docker run arm32v7/python:3.7.0 -> but it will take too long
+# finally:
+docker run arm32v7/python:3.7.0-slim # or pull, this time
+
+# and run it, and show its version
+import sys
+print(sys.version)
+
+# excercise 3:
+
+# make this script, save it as hello.py
+
+#!/usr/bin/env python3
+print("hello world!")
+
+# run it localy using:
+python3 hello.py
+
+# now, change something in this script:
+
+#!/usr/bin/env python3
+print(f"hello world!")
+
+# what about now?
+python3.py
+
+# run interactively:
+docker run -it arm32v7/python:3.7.0-slim
+
+# run on-demand
+alias python3.7='docker run -it --rm --name my-running-script -v "$PWD":/usr/src/myapp -w /usr/src/myapp arm32v7/python:3.7.0-slim python'
+
+# details found here:
+# https://hub.docker.com/r/arm32v7/python/
+
+
+####################################################
+#################### case study ####################
+###  I wanna emulate my new potential platform #####
+####################################################
+
+# OpenCV 3.x + qemu + numpy + OpenMP + numa + arm64v8
+
+
+####################################################
+############### docker images ######################
+####################################################
+
+docker image ls
+docker image rm
+
+
+####################################################
+################### Dockerfile #####################
+####################################################
+
+# kopiranje, importanje, resursi - fajlovi, folderi, proslijedivanje, print continous
+
+# make a new folder - call it my_first_docker_app
+# create your python3 script that prints something, indefinitely
+# call it app.py
+
+#!/usr/bin/env python3
+import time
+
+i = 1
+while True:
+    print(i)
+    i = i + 1
+    time.sleep(0.5)
+
+
+# create a file named "Dockerfile", edit it:
+
+
+FROM arm32v7/python:3.7.0-slim
+
+RUN pwd
+
+RUN ls
+
+CMD ["python"]
+
+# build it with 
+docker build . # where . is path to the folder where Dockerfile is placed
+# list it
+docker image ls # name is <none>
+docker image rm
+
+# you better name your app and run it
+docker build . -t "aplikacija"
+
+# add some cds...
+RUN cd root
+RUN pwd # it forgot...
+
+# always use && for commands that go together
+
+RUN cd && pwd
+
+# for permanent workidir changes there is WORKDIR command...
+
+WORKDIR /root
+
+# run our app
+docker run aplikacija
+
+# make our app to be run...
+CMD ["python", "-u", "app.py"]
+
+# and run it again, this time got some error...
+# (null): can't open file 'app.py': [Errno 2] No such file or directory
+# because we need to copy our app to docker image filesystem... (it is a seperate filesystem from our filesystem)
+# luckily, there is a command that will copy a content from our to docker image filesystem
+ADD app.py /root/app.py # by syntax, it is similar to unix cp command
+
+# now we run our app (again), and it is running, but not in background
+docker run aplikacija
+# quit using ctrl + c
+
+# to run it in background, we add flag -d (meaning "deamon" mode)
+docker run -d aplikacija
+
+# using docker container ls, wee see that app is running, but we see no output...
+# we can run it interactively using -it flag, but we would need to stop current container
+
+# we can attach to working container using:
+docker attach [ID]
+# detach using CTRL+P and CTRL+q 
+
+####################################################
+######### Excercise 4: dockerize your flask app! ###
+####################################################
+
+# tip - git clone
+# https://github.com/LVH-27/nkosl-www
+
+git clone https://github.com/LVH-27/nkosl-www.git
+
+# in dockerfile, copy its content to root directory:
+
+FROM arm32v7/python:3.7.0-slim
+
+WORKDIR /root
+
+RUN pwd
+
+ADD nkosl-www/app /root/app/
+ADD nkosl-www/db /root/db/
+
+RUN ls -alh
+RUN ls -alh /root/app
+
+CMD ["python", "-u",  "app/nkosl-blog/nkosl-blog.py"]
+
+# build
+docker build . -t "flask-aplikacija"
+
+# run interactively
+docker run -it flask-aplikacija
+
+# error - we need to install some requirements to dockered OS, given by:
+
+FROM arm32v7/python:3.7.0-slim
+
+WORKDIR /root
+
+RUN pwd
+
+ADD nkosl-www/app /root/app/
+ADD nkosl-www/db /root/db/
+
+RUN ls -alh
+RUN ls -alh /root/app
+
+RUN uname -a
+
+# installing requirements...
+RUN apt update
+RUN apt install libpq-dev gcc -y
+RUN pip install -r app/nkosl-blog/requirements.txt
+
+CMD ["python", "-u",  "app/nkosl-blog/nkosl-blog.py"]
+
+#run command should be run with volume and mapping options, for example -p 80:80,  -v /dev/sda:/dev/sda
+
+####################################################
+######### Excercise 5: dockerize my LED light ######
+####################################################
+# make new project folder - led_app
+git clone https://gitlab.com/tloki/rpi3-ledice.git
+
+# read the instructions given
+# make default script work
+# make your python file which uses blink_red_green library, blink red and green 
+# interchangeably with period of 1 second (hint: use python time.sleep() function
+
+# b) dockerize it (run it with port and resource mapping using -p and -v)
+
+# c) make it work on boot
+# read https://docs.docker.com/config/containers/start-containers-automatically/
+
+####################################################
+################### Dockerfile u IoT-u #############
+####################################################
+# implement final excercise given instructions in TODO comments
+
